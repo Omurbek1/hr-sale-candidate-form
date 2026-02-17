@@ -15,7 +15,7 @@ import * as XLSX from "xlsx";
 //  🔧  CONFIG
 // ══════════════════════════════════════════════════════════
 const SHEETS_URL =
-  "https://script.google.com/macros/s/AKfycby89qyw6LjfgokbFUQxF_c699bdEGX2mI4SDWcDz-t8GeEgUIjoTHF10xgo813nghUL1A/exec";
+  "https://script.google.com/macros/s/AKfycbypE7lvTNuS1B3B3lZANz8VjZnp5mk2-1hcLBUCPkYxLdg96KXgqsDhmoYtxaJEVLTXuw/exec";
 /*
   ┌─ SETUP — Google Sheets ─────────────────────────────────┐
   │  1. sheets.google.com → жаңы таблица                    │
@@ -1378,11 +1378,12 @@ const lay = {
     fontFamily: "'Segoe UI','Helvetica Neue',sans-serif",
     position: "relative",
   }),
-  wrap: (m: boolean): CSSProperties => ({
-    maxWidth: 680,
-    margin: "0 auto",
-    width: "100%",
-  }),
+  wrap: (isMobile: boolean): CSSProperties =>
+    ({
+      maxWidth: 680,
+      margin: "0 auto",
+      width: isMobile ? "100%" : undefined,
+    }) as CSSProperties,
   desktopWrap: {
     display: "flex" as const,
     gap: 24,

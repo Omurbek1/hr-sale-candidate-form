@@ -15,7 +15,7 @@ import * as XLSX from "xlsx";
 //  🔧  CONFIG
 // ══════════════════════════════════════════════════════════
 const SHEETS_URL =
-  "https://script.google.com/macros/s/AKfycbypE7lvTNuS1B3B3lZANz8VjZnp5mk2-1hcLBUCPkYxLdg96KXgqsDhmoYtxaJEVLTXuw/exec";
+  "https://script.google.com/macros/s/AKfycbx_a9nER-Oi6dm4Pm4__w1WIOXTzHVLHSJj3S-Vf-Zp-Shii-e50QVafZou8Z0sOsqdKw/exec";
 /*
   ┌─ SETUP — Google Sheets ─────────────────────────────────┐
   │  1. sheets.google.com → жаңы таблица                    │
@@ -169,7 +169,7 @@ const SCHEDULES: Schedule[] = [
   {
     id: "morning",
     emoji: "🌅",
-    label: "Эртең – Күндүз",
+    label: "Күндүз",
     time: "10:00 – 18:00",
     sub: "Дш–Шб · эс алуу: жекшемби + 1 жумуш күнү",
     hours: [10, 11, 12, 13, 14, 15, 16, 17],
@@ -177,7 +177,7 @@ const SCHEDULES: Schedule[] = [
   {
     id: "evening",
     emoji: "🌆",
-    label: "Күндүз – Кеч",
+    label: "Кеч",
     time: "14:00 – 22:00",
     sub: "Дш–Шб · эс алуу: жекшемби + 1 жумуш күнү",
     hours: [14, 15, 16, 17, 18, 19, 20, 21],
@@ -269,13 +269,14 @@ function phoneMaskKG(value: string): string {
 }
 
 function formatLangs(langs: LangItem[]): string {
-  return langs.map((l) => `${l.label} — ${LEVEL_LABELS[l.level]}`).join("; ");
+  return langs.map((l) => `${l.label} (${LEVEL_LABELS[l.level]})`).join("; ");
 }
 
 async function sendToSheets(entry: Application): Promise<void> {
   console.log("Sending to Sheets:", entry);
   await fetch(SHEETS_URL, {
     method: "POST",
+    mode: "no-cors",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       name: entry.name,
@@ -392,6 +393,7 @@ export default function App(): JSX.Element {
   }
 
   async function handleSubmit(): Promise<void> {
+    console.log("Submitting form:", form);
     if (!validate()) return;
     setSending(true);
     setSendErr(false);
@@ -403,6 +405,8 @@ export default function App(): JSX.Element {
       hour: "2-digit",
       minute: "2-digit",
     });
+
+    const langsString = formatLangs(form.languages);
     const entry: Application = {
       ...form,
       schedule: sched
@@ -412,10 +416,12 @@ export default function App(): JSX.Element {
         .map((id) => SALES_TYPES.find((t) => t.id === id)?.label ?? id)
         .join(", "),
 
-      languages: formatLangs(form.languages),
+      languages: langsString,
       ts,
       id: Date.now(),
     };
+
+    console.log("Formatted entry:", entry);
     try {
       await sendToSheets(entry);
       const updated = [...apps, entry];
@@ -701,7 +707,7 @@ const FormPage: FC<FormPageProps> = ({
         </FField>
 
         <TwoCol isMobile={isMobile}>
-          <FField label="Күтүлгөн айлык" hint={HINTS.salary}>
+          <FField label="Канча  айлык алгыныз келет?" hint={HINTS.salary}>
             <select
               style={sS()}
               value={form.salary}
@@ -715,13 +721,16 @@ const FormPage: FC<FormPageProps> = ({
                 "30 000–50 000 сом",
                 "50 000–80 000 сом",
                 "80 000 сомдон ашык",
-                "Талкуулоодо",
+                "Сүйлөшүп чечсек болот",
               ].map((o) => (
                 <option key={o}>{o}</option>
               ))}
             </select>
           </FField>
-          <FField label="Качан башташка даярсыз?" hint={HINTS.startDate}>
+          <FField
+            label="Качан жумушка чыкканга даярсыз?"
+            hint={HINTS.startDate}
+          >
             <select
               style={sS()}
               value={form.startDate}
@@ -730,12 +739,7 @@ const FormPage: FC<FormPageProps> = ({
               }
             >
               <option value="">— Тандаңыз —</option>
-              {[
-                "Дароо",
-                "1 жумадан кийин",
-                "2 жумадан кийин",
-                "1 айдан кийин",
-              ].map((o) => (
+              {["Дароо", "1 жумадан кийин", "2 жумадан кийин"].map((o) => (
                 <option key={o}>{o}</option>
               ))}
             </select>
@@ -776,13 +780,7 @@ const FormPage: FC<FormPageProps> = ({
             }
           >
             <option value="">— Тандаңыз —</option>
-            {[
-              "Hh.kg (HeadHunter)",
-              "Нomework.kg",
-              "Dostuk (Дос айтты)",
-              "Социалдык тармактар",
-              "Башка",
-            ].map((o) => (
+            {["Тааныган адамдан", "Социалдык тармактар", "Башка"].map((o) => (
               <option key={o}>{o}</option>
             ))}
           </select>
@@ -970,7 +968,7 @@ const SidebarInfo: FC = () => (
     <div style={side.card}>
       <div style={side.cardTitle}>🎁 Биз сунуштайбыз</div>
       {[
-        ["📈", "Кирешеге чек жок"],
+        ["📈", "Татыктуу айлык"],
         ["🎓", "Биринчи күндөн окутуу"],
         ["🏆", "Эң жакшы кызматкерге бонус"],
         ["👥", "Жаш жана дос жамаат"],
@@ -1002,8 +1000,8 @@ const SidebarInfo: FC = () => (
     <div style={side.card}>
       <div style={side.cardTitle}>📞 HR байланышы</div>
       {[
-        ["📱", "+996 (700) 000-000"],
-        ["✉️", "hr@company.kg"],
+        ["📱", "+996 (706) 882-271"],
+        ["✉️", "omurbekmamytbekov545@gmail.com"],
         ["🕘", "Дш–Жм, 09:00–18:00"],
       ].map(([ic, tx]) => (
         <div
@@ -1372,18 +1370,24 @@ const Spin: FC = () => (
 // ══════════════════════════════════════════════════════════
 
 const lay = {
-  page: (m: boolean): CSSProperties => ({
+  page: (isMobile: boolean): CSSProperties => ({
     minHeight: "100vh",
-    padding: m ? "14px 10px 48px" : "28px 16px 60px",
+    padding: isMobile ? "16px 12px 40px" : "40px 20px 80px",
     fontFamily: "'Segoe UI','Helvetica Neue',sans-serif",
     position: "relative",
+    display: "flex",
+    justifyContent: "center",
+    background: "#f5f7fb",
   }),
-  wrap: (isMobile: boolean): CSSProperties =>
-    ({
-      maxWidth: 680,
-      margin: "0 auto",
-      width: isMobile ? "100%" : undefined,
-    }) as CSSProperties,
+
+  wrap: (isMobile: boolean): CSSProperties => ({
+    width: "60%",
+    maxWidth: isMobile ? "100%" : 480,
+    background: "#ffffff",
+    borderRadius: isMobile ? 0 : 16,
+    boxShadow: isMobile ? "none" : "0 8px 30px rgba(0,0,0,0.06)",
+    padding: isMobile ? "18px 16px 24px" : "28px 32px 36px",
+  }),
   desktopWrap: {
     display: "flex" as const,
     gap: 24,

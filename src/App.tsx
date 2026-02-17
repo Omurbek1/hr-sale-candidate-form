@@ -66,7 +66,7 @@ type ScheduleId = "morning" | "evening" | "any";
 type SalesTypeId = "b2c" | "b2b" | "tele" | "online";
 type TagColor = "blue" | "green" | "red" | "kg";
 type Breakpoint = "mobile" | "tablet" | "desktop";
-type LangLevel = 1 | 2 | 3 | 4 | 5;
+type LangLevel = 1 | 2 | 3 | 4;
 
 interface LangItem {
   id: string;
@@ -133,9 +133,8 @@ const LANG_OPTIONS = [
 const LEVEL_LABELS: Record<LangLevel, string> = {
   1: "Башталгыч",
   2: "Орточо",
-  3: "Жакшы",
-  4: "Өтө жакшы",
-  5: "Эркин",
+  3: "Өтө жакшы",
+  4: "Эркин",
 };
 
 const LEVEL_COLORS: Record<LangLevel, string> = {
@@ -143,11 +142,10 @@ const LEVEL_COLORS: Record<LangLevel, string> = {
   2: "#f97316",
   3: "#eab308",
   4: "#22c55e",
-  5: "#1a73e8",
 };
 
 const INIT_LANGS: LangItem[] = [
-  { id: "ky", label: "Кыргызча", level: 5 },
+  { id: "ky", label: "Кыргызча", level: 4 },
   { id: "ru", label: "Орусча", level: 3 },
 ];
 
@@ -171,16 +169,16 @@ const SCHEDULES: Schedule[] = [
     emoji: "🌅",
     label: "Күндүз",
     time: "10:00 – 18:00",
-    sub: "Дш–Шб · эс алуу: жекшемби + 1 жумуш күнү",
-    hours: [10, 11, 12, 13, 14, 15, 16, 17],
+    sub: "Жолугушууда эс алуучу күндөрдү  талкуулайбыз",
+    hours: [10, 11, 12, 13, 14, 15, 16, 17, 18],
   },
   {
     id: "evening",
     emoji: "🌆",
     label: "Кеч",
     time: "14:00 – 22:00",
-    sub: "Дш–Шб · эс алуу: жекшемби + 1 жумуш күнү",
-    hours: [14, 15, 16, 17, 18, 19, 20, 21],
+    sub: "Жолугушууда эс алуучу күндөрдү  талкуулайбыз",
+    hours: [14, 15, 16, 17, 18, 19, 20, 21, 22],
   },
   {
     id: "any",
@@ -901,31 +899,53 @@ interface ScaleRowProps {
   level: LangLevel;
   onLevel: (lv: LangLevel) => void;
   onRemove: () => void;
+  isMobile?: boolean;
 }
 
-const ScaleRow: FC<ScaleRowProps> = ({ label, level, onLevel, onRemove }) => (
-  <div style={$.scaleRow}>
-    <div style={$.scaleLabel}>{label}</div>
-    <div style={$.scaleDots}>
-      {([1, 2, 3, 4, 5] as LangLevel[]).map((n) => (
-        <button
-          key={n}
-          onClick={() => onLevel(n)}
-          title={LEVEL_LABELS[n]}
-          style={{
-            ...$.scaleDot,
-            background: n <= level ? LEVEL_COLORS[level] : "#e5e7eb",
-            transform: n === level ? "scale(1.25)" : "scale(1)",
-          }}
-        />
-      ))}
-      <span style={{ ...$.scaleLvlLabel, color: LEVEL_COLORS[level] }}>
-        {LEVEL_LABELS[level]}
-      </span>
+const ScaleRow: FC<ScaleRowProps> = ({
+  label,
+  level,
+  onLevel,
+  onRemove,
+  isMobile,
+}) => (
+  <div style={$.scaleRow(isMobile)}>
+    {/* Label сверху */}
+    <div style={$.scaleLabel(isMobile)}>{label}</div>
+
+    {/* Контейнер для точек + кнопки */}
+    <div
+      style={{
+        display: "flex",
+        alignItems: isMobile ? "flex-start" : "center",
+        gap: isMobile ? 6 : 12,
+        width: "100%",
+      }}
+    >
+      {/* Точки */}
+      <div style={$.scaleDots(isMobile)}>
+        {([1, 2, 3, 4] as LangLevel[]).map((n) => (
+          <button
+            key={n}
+            onClick={() => onLevel(n)}
+            title={LEVEL_LABELS[n]}
+            style={{
+              ...$.scaleDot(isMobile),
+              background: n <= level ? LEVEL_COLORS[level] : "#e5e7eb",
+              transform: n === level ? "scale(1.25)" : "scale(1)",
+            }}
+          />
+        ))}
+        <span style={{ ...$.scaleLvlLabel, color: LEVEL_COLORS[level] }}>
+          {LEVEL_LABELS[level]}
+        </span>
+      </div>
+
+      {/* Кнопка удаления */}
+      <button onClick={onRemove} style={$.scaleRemove(isMobile)}>
+        ✕
+      </button>
     </div>
-    <button onClick={onRemove} style={$.scaleRemove}>
-      ✕
-    </button>
   </div>
 );
 
@@ -1372,16 +1392,16 @@ const Spin: FC = () => (
 const lay = {
   page: (isMobile: boolean): CSSProperties => ({
     minHeight: "100vh",
-    padding: isMobile ? "16px 12px 40px" : "40px 20px 80px",
+    padding: isMobile ? 0 : "40px 20px 80px",
     fontFamily: "'Segoe UI','Helvetica Neue',sans-serif",
     position: "relative",
     display: "flex",
-    justifyContent: "center",
+    justifyContent: isMobile ? "flex-start" : "center",
     background: "#f5f7fb",
   }),
 
   wrap: (isMobile: boolean): CSSProperties => ({
-    width: "60%",
+    width: isMobile ? "90%" : "60%",
     maxWidth: isMobile ? "100%" : 480,
     background: "#ffffff",
     borderRadius: isMobile ? 0 : 16,
@@ -1553,7 +1573,67 @@ const sS = (err?: string): CSSProperties => ({
 //  STATIC STYLES
 // ══════════════════════════════════════════════════════════
 
-const $: Record<string, CSSProperties> = {
+const $: {
+  pageBg: React.CSSProperties;
+  centerWrap: React.CSSProperties;
+  hero: React.CSSProperties;
+  heroBar: React.CSSProperties;
+  heroTop: React.CSSProperties;
+  heroBadge: React.CSSProperties;
+  heroOrg: React.CSSProperties;
+  heroDesc: React.CSSProperties;
+  heroTags: React.CSSProperties;
+  secTitle: React.CSSProperties;
+  label: React.CSSProperties;
+  hint: React.CSSProperties;
+  errText: React.CSSProperties;
+  errBanner: React.CSSProperties;
+  sendErrBanner: React.CSSProperties;
+  schedGrid: React.CSSProperties;
+  schedBtn: React.CSSProperties;
+  schedOn: React.CSSProperties;
+  schedCheck: React.CSSProperties;
+  schedEmoji: React.CSSProperties;
+  schedName: React.CSSProperties;
+  schedTime: React.CSSProperties;
+  schedSub: React.CSSProperties;
+  hourRow: React.CSSProperties;
+  hour: React.CSSProperties;
+  hourOn: React.CSSProperties;
+  hourOff: React.CSSProperties;
+  typeBtn: React.CSSProperties;
+  typeBtnOn: React.CSSProperties;
+
+  // Scale row — эти 4 свойства теперь функции
+  scaleRow: (isMobile?: boolean) => React.CSSProperties;
+  scaleLabel: (isMobile?: boolean) => React.CSSProperties;
+  scaleDots: (isMobile?: boolean) => React.CSSProperties;
+  scaleDot: (isMobile?: boolean) => React.CSSProperties;
+  scaleLvlLabel: React.CSSProperties;
+  scaleRemove: (isMobile?: boolean) => React.CSSProperties;
+
+  btnMain: React.CSSProperties;
+  adminLink: React.CSSProperties;
+  btnBack: React.CSSProperties;
+  btnExcel: React.CSSProperties;
+
+  thanksCard: React.CSSProperties;
+  thanksTitle: React.CSSProperties;
+  thanksSub: React.CSSProperties;
+  thanksHint: React.CSSProperties;
+
+  loginCard: React.CSSProperties;
+  loginTitle: React.CSSProperties;
+
+  adminTitle: React.CSSProperties;
+  empty: React.CSSProperties;
+  appCard: React.CSSProperties;
+  appNum: React.CSSProperties;
+
+  tag: React.CSSProperties;
+  tagBlue: React.CSSProperties;
+  tagGreen: React.CSSProperties;
+} = {
   pageBg: {
     position: "fixed",
     inset: 0,
@@ -1711,44 +1791,56 @@ const $: Record<string, CSSProperties> = {
   typeBtnOn: { border: "1.5px solid #1855c4", background: "#eaf1ff" },
 
   // Scale row
-  scaleRow: {
+  scaleRow: (isMobile?: boolean): React.CSSProperties => ({
     display: "flex",
     alignItems: "center",
-    gap: 10,
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: isMobile ? 6 : 10,
     padding: "10px 14px",
     background: "#fafbff",
     borderRadius: 8,
     border: "1px solid #e8edf4",
-  },
-  scaleLabel: {
+    width: "90%",
+  }),
+  scaleLabel: (isMobile?: boolean): React.CSSProperties => ({
     fontSize: 13,
     fontWeight: 600,
     color: "#202124",
     flex: 1,
     minWidth: 0,
-  },
-  scaleDots: { display: "flex", alignItems: "center", gap: 6 },
-  scaleDot: {
-    width: 16,
-    height: 16,
+    marginBottom: isMobile ? 6 : 0,
+  }),
+  scaleDots: (isMobile?: boolean): React.CSSProperties => ({
+    display: "flex",
+    width: "80%",
+    alignItems: "center",
+    gap: isMobile ? 4 : 8,
+    flexWrap: isMobile ? "wrap" : "nowrap",
+    justifyContent: "flex-start",
+  }),
+  scaleDot: (isMobile?: boolean): React.CSSProperties => ({
+    width: isMobile ? 5 : 16,
+    height: isMobile ? 5 : 6,
     borderRadius: "50%",
     border: "none",
     cursor: "pointer",
-    transition: "transform .15s, background .15s",
+    transition: "transform 0.15s, background 0.15s",
     flexShrink: 0,
-  },
+  }),
   scaleLvlLabel: { fontSize: 11, fontWeight: 700, minWidth: 72 },
-  scaleRemove: {
+  scaleRemove: (isMobile?: boolean): React.CSSProperties => ({
     background: "none",
     border: "none",
     color: "#9aa0a6",
     cursor: "pointer",
     fontSize: 14,
-    padding: "0 2px",
+    padding: "4px 2px",
     lineHeight: 1,
     flexShrink: 0,
-  },
-
+    alignSelf: isMobile ? "flex-start" : "auto",
+    marginTop: isMobile ? 6 : 0,
+  }),
   btnMain: {
     width: "100%",
     background: "#1855c4",
